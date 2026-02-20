@@ -43,7 +43,7 @@
   <div id="toast" class="toast" role="alert" aria-live="polite"></div>
 
   <!-- Main -->
-  <main id="main">
+  <main id="main" style="transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);">
 
     <!-- Section 1: Cover -->
     <section id="cover" class="section">
@@ -147,14 +147,24 @@
     <!-- Section 3: Calendar -->
     <section id="when" class="section">
       <div class="section-inner">
+
+        <div class="ornament-line reveal">
+          <svg width="140" height="20" viewBox="0 0 140 20" fill="none" aria-hidden="true">
+            <line x1="0" y1="10" x2="58" y2="10" stroke="#C9A96E" stroke-width="0.5"/>
+            <path d="M70 3 L77 10 L70 17 L63 10 Z" stroke="#C9A96E" stroke-width="0.5" fill="none"/>
+            <line x1="82" y1="10" x2="140" y2="10" stroke="#C9A96E" stroke-width="0.5"/>
+          </svg>
+        </div>
+        
+        <div class="calendar reveal" id="calendar" aria-label="2026년 3월 달력"></div>
+
         <h2 class="section-title reveal">일시</h2>
 
         <div class="date-hero reveal">
           <p class="date-korean">2026년 3월 15일 일요일</p>
+          <div class="date-time-divider"></div>
           <p class="date-time-display">오후 12:30</p>
         </div>
-
-        <div class="calendar reveal" id="calendar" aria-label="2026년 3월 달력"></div>
 
         <div class="countdown reveal" id="countdown" aria-label="디데이 카운트다운">
           <p class="countdown-label-text">상견례까지</p>

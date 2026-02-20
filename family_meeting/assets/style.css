@@ -35,9 +35,9 @@
 }
 
 html {
-  scroll-snap-type: y mandatory;
   -webkit-text-size-adjust: 100%;
   font-size: 16px;
+  overflow: hidden;
 }
 
 body {
@@ -48,7 +48,8 @@ body {
   letter-spacing: 0.02em;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
+  overflow: hidden;
+  height: var(--vh);
 }
 
 a { color: inherit; text-decoration: none; }
@@ -197,7 +198,6 @@ body::after {
   z-index: 2;
   min-height: var(--vh);
   height: var(--vh);
-  scroll-snap-align: start;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -546,42 +546,52 @@ body::after {
 
 
 /* ==========================================
-   Section 4: Calendar
+   Section 3: Calendar
    ========================================== */
 
 #when .section-inner {
   gap: 0;
-  padding-top: 32px;
-  padding-bottom: 28px;
+  padding-top: 28px;
+  padding-bottom: 24px;
   justify-content: center;
 }
 
-.date-hero { margin-bottom: 18px; }
+.date-hero {
+  margin-bottom: 20px;
+}
 
 .date-korean {
   font-family: var(--font-serif);
-  font-size: clamp(1.1rem, 4vw, 1.3rem);
+  font-size: clamp(1.25rem, 4.5vw, 1.45rem);
   font-weight: 700;
   color: var(--color-text);
   letter-spacing: 0.08em;
-  margin-bottom: 4px;
+  margin-bottom: 0;
+}
+
+.date-time-divider {
+  width: 28px;
+  height: 1px;
+  background: var(--color-accent-light);
+  margin: 10px auto;
+  opacity: 0.6;
 }
 
 .date-time-display {
   font-family: var(--font-display);
-  font-size: clamp(0.9rem, 3vw, 1rem);
-  font-weight: 300;
-  color: var(--color-accent);
-  letter-spacing: 0.12em;
+  font-size: clamp(1rem, 3.5vw, 1.15rem);
+  font-weight: 400;
+  color: var(--color-text-light);
+  letter-spacing: 0.15em;
 }
 
 .calendar {
   width: 100%;
-  max-width: 280px;
-  margin-bottom: 18px;
+  max-width: 300px;
+  margin-bottom: 24px;
 }
 
-.cal-header { text-align: center; margin-bottom: 12px; }
+.cal-header { text-align: center; margin-bottom: 14px; }
 
 .cal-month {
   font-family: var(--font-display);
@@ -594,16 +604,16 @@ body::after {
 .cal-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 2px;
+  gap: 4px;
 }
 
 .cal-day-name {
   font-family: var(--font-sans);
-  font-size: 0.65rem;
+  font-size: 0.72rem;
   font-weight: 400;
   color: var(--color-border);
   text-align: center;
-  padding: 4px 0;
+  padding: 4px 0 6px;
   letter-spacing: 0.05em;
 }
 
@@ -642,22 +652,26 @@ body::after {
 .cal-day.empty { visibility: hidden; }
 
 /* Countdown */
-.countdown { width: 100%; }
+.countdown {
+  width: 100%;
+  padding-top: 20px;
+  border-top: 1px solid rgba(201, 169, 110, 0.15);
+}
 
 .countdown-label-text {
   font-family: var(--font-sans);
-  font-size: 0.7rem;
+  font-size: 0.72rem;
   font-weight: 300;
   color: var(--color-text-light);
   letter-spacing: 0.15em;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .countdown-boxes {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .countdown-item {
@@ -669,7 +683,7 @@ body::after {
 
 .countdown-num {
   font-family: var(--font-display);
-  font-size: clamp(1.4rem, 5vw, 1.8rem);
+  font-size: clamp(1.25rem, 4.5vw, 1.55rem);
   font-weight: 300;
   color: var(--color-text);
   line-height: 1;
@@ -683,16 +697,16 @@ body::after {
 
 .countdown-unit {
   font-family: var(--font-sans);
-  font-size: 0.6rem;
+  font-size: 0.68rem;
   font-weight: 300;
   color: var(--color-text-light);
-  margin-top: 4px;
+  margin-top: 6px;
   letter-spacing: 0.1em;
 }
 
 .countdown-sep {
   font-family: var(--font-display);
-  font-size: 1.2rem;
+  font-size: 1rem;
   font-weight: 300;
   color: var(--color-border);
   margin-top: -12px;
@@ -932,7 +946,9 @@ body::after {
   .cover-title .name { font-size: 1.3rem; }
   .greeting-text p { font-size: 0.85rem; line-height: 1.9; margin-bottom: 14px; }
   .date-hero { margin-bottom: 12px; }
-  .calendar { margin-bottom: 12px; max-width: 260px; }
+  .date-time-divider { margin: 8px auto; }
+  .calendar { margin-bottom: 16px; max-width: 270px; }
+  .countdown { padding-top: 14px; }
   .countdown-label-text { margin-bottom: 8px; }
   .sketch-map { max-width: 300px; margin-bottom: 14px; }
   .venue { margin-bottom: 12px; }
@@ -945,9 +961,14 @@ body::after {
   .cover-title { margin-bottom: 16px; }
   .section-title { margin-bottom: 14px; }
   .greeting-text p { font-size: 0.8rem; margin-bottom: 10px; line-height: 1.8; }
-  .calendar { margin-bottom: 10px; max-width: 240px; }
+  #when .ornament-line { margin-bottom: 10px; }
+  .date-hero { margin-bottom: 10px; }
+  .date-korean { font-size: 1.1rem; }
+  .date-time-divider { margin: 6px auto; }
+  .calendar { margin-bottom: 12px; max-width: 250px; }
   .cal-day { padding: 3px 0; font-size: 0.78rem; }
-  .countdown-num { font-size: 1.2rem; }
+  .countdown { padding-top: 10px; }
+  .countdown-num { font-size: 1.1rem; }
 }
 
 @media (min-width: 768px) {

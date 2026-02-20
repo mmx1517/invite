@@ -192,16 +192,13 @@
      ========================================== */
 
   function startCoverSequence() {
-    // 1. SVG ornament drawing
     animateOrnament();
 
-    // 2. Character reveals
     document.querySelectorAll('[data-char-reveal]').forEach((el) => {
       const delay = parseInt(el.dataset.delay || '0', 10);
       splitAndReveal(el, delay);
     });
 
-    // 3. Cover fade elements
     document.querySelectorAll('.cover-fade').forEach((el) => {
       const delay = parseInt(el.dataset.delay || '0', 10);
       setTimeout(() => el.classList.add('shown'), delay);
@@ -241,24 +238,20 @@
     const leaves = svg.querySelectorAll('.ornament-leaf');
     const buds = svg.querySelectorAll('.ornament-bud');
 
-    // Measure and set dash arrays
     paths.forEach((path) => {
       const len = path.getTotalLength();
       path.style.strokeDasharray = len;
       path.style.strokeDashoffset = len;
     });
 
-    // Show branches
     setTimeout(() => {
       branches.forEach((b) => (b.style.opacity = '1'));
     }, 300);
 
-    // Draw paths
     setTimeout(() => {
       paths.forEach((p) => p.classList.add('drawn'));
     }, 400);
 
-    // Fade in leaves
     leaves.forEach((leaf, i) => {
       setTimeout(() => {
         leaf.style.opacity = leaf.getAttribute('fill-opacity') || '0.1';
@@ -266,7 +259,6 @@
       }, 900 + i * 120);
     });
 
-    // Fade in buds
     buds.forEach((bud, i) => {
       setTimeout(() => {
         bud.style.opacity = '0.5';
@@ -429,65 +421,165 @@
   });
 
   /* ==========================================
-     Section Reveal (Intersection Observer)
+     Page-by-Page Scroll Controller (transform-based)
      ========================================== */
 
-  function setupSectionReveal() {
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('in-view');
-          const els = entry.target.querySelectorAll('.reveal:not(.visible)');
-          els.forEach((el, i) => {
-            el.style.transitionDelay = i * 0.14 + 's';
-            el.classList.add('visible');
-          });
-          observer.unobserve(entry.target);
-        }
-      });
-    }, { threshold: 0.2 });
+  const mainEl = document.getElementById('main');
+  const sections = Array.from(document.querySelectorAll('.section'));
+  const totalSections = sections.length;
+  let currentSection = 0;
+  let isAnimating = false;
+  const ANIM_DURATION = 650;
+  const SWIPE_THRESHOLD = 30;
+  const SNAP_TRANSITION = 'transform 0.65s cubic-bezier(0.16, 1, 0.3, 1)';
 
-    document.querySelectorAll('.section').forEach((s) => {
-      if (s.id === 'cover') {
-        s.classList.add('in-view');
-        return;
-      }
-      observer.observe(s);
+  let touchStartY = 0;
+  let touchStartTime = 0;
+  let touchMoveY = 0;
+  let isTouching = false;
+
+  const revealedSections = new Set();
+  const progressBar = document.getElementById('scroll-progress');
+  const scrollInd = document.querySelector('.scroll-indicator');
+  let indicatorHidden = false;
+
+  function revealSection(index) {
+    const section = sections[index];
+    if (!section || revealedSections.has(index)) return;
+    revealedSections.add(index);
+    section.classList.add('in-view');
+    const els = section.querySelectorAll('.reveal:not(.visible)');
+    els.forEach((el, i) => {
+      el.style.transitionDelay = i * 0.14 + 's';
+      el.classList.add('visible');
     });
   }
 
-  setupSectionReveal();
-
-  /* ==========================================
-     Scroll Progress
-     ========================================== */
-
-  const progressBar = document.getElementById('scroll-progress');
-
   function updateProgress() {
-    const max = document.documentElement.scrollHeight - window.innerHeight;
-    if (max <= 0) return;
-    const pct = (window.scrollY / max) * 100;
-    if (progressBar) progressBar.style.width = pct + '%';
+    if (!progressBar || totalSections <= 1) return;
+    const pct = (currentSection / (totalSections - 1)) * 100;
+    progressBar.style.width = pct + '%';
   }
 
-  window.addEventListener('scroll', updateProgress, { passive: true });
-
-  /* ==========================================
-     Scroll Indicator Auto-Hide
-     ========================================== */
-
-  const scrollInd = document.querySelector('.scroll-indicator');
-  if (scrollInd) {
-    const onScroll = () => {
-      if (window.scrollY > 50) {
-        scrollInd.style.opacity = '0';
-        scrollInd.style.transition = 'opacity 0.6s ease';
-        window.removeEventListener('scroll', onScroll);
-      }
-    };
-    window.addEventListener('scroll', onScroll, { passive: true });
+  function updateScrollIndicator() {
+    if (scrollInd && !indicatorHidden && currentSection > 0) {
+      scrollInd.style.opacity = '0';
+      scrollInd.style.transition = 'opacity 0.6s ease';
+      indicatorHidden = true;
+    }
   }
+
+  function goToSection(index, instant) {
+    if (index < 0 || index >= totalSections) return;
+    if (index === currentSection && !instant) return;
+    currentSection = index;
+    const offset = -index * 100;
+    if (instant) {
+      mainEl.style.transition = 'none';
+      mainEl.style.transform = 'translateY(' + offset + 'vh)';
+      mainEl.offsetHeight; // force reflow
+      mainEl.style.transition = SNAP_TRANSITION;
+    } else {
+      isAnimating = true;
+      mainEl.style.transform = 'translateY(' + offset + 'vh)';
+      setTimeout(() => { isAnimating = false; }, ANIM_DURATION);
+    }
+    updateProgress();
+    updateScrollIndicator();
+    revealSection(currentSection);
+  }
+
+  // Touch handling — real-time drag with snap
+  window.addEventListener('touchstart', (e) => {
+    if (isAnimating) return;
+    touchStartY = e.touches[0].clientY;
+    touchMoveY = touchStartY;
+    touchStartTime = Date.now();
+    isTouching = true;
+    mainEl.style.transition = 'none';
+  }, { passive: true });
+
+  window.addEventListener('touchmove', (e) => {
+    if (!isTouching) return;
+    e.preventDefault();
+    touchMoveY = e.touches[0].clientY;
+
+    const dragDelta = touchMoveY - touchStartY;
+    const vp = window.innerHeight;
+    const baseOffset = -currentSection * vp;
+
+    // Clamp drag to ±1 section
+    const clamped = Math.max(-vp, Math.min(vp, dragDelta));
+    let offset = baseOffset + clamped;
+
+    // Rubber-band at boundaries
+    const maxOff = 0;
+    const minOff = -(totalSections - 1) * vp;
+    if (offset > maxOff) {
+      offset = maxOff + (offset - maxOff) * 0.2;
+    } else if (offset < minOff) {
+      offset = minOff + (offset - minOff) * 0.2;
+    }
+
+    mainEl.style.transform = 'translateY(' + offset + 'px)';
+  }, { passive: false });
+
+  function finishTouch() {
+    if (!isTouching) return;
+    isTouching = false;
+
+    const dy = touchStartY - touchMoveY;
+    const dt = Date.now() - touchStartTime;
+    const velocity = Math.abs(dy) / Math.max(dt, 1);
+
+    mainEl.style.transition = SNAP_TRANSITION;
+
+    let target = currentSection;
+    if (Math.abs(dy) > SWIPE_THRESHOLD || velocity > 0.3) {
+      target += dy > 0 ? 1 : -1;
+      target = Math.max(0, Math.min(totalSections - 1, target));
+    }
+
+    isAnimating = true;
+    currentSection = target;
+    mainEl.style.transform = 'translateY(' + (-target * 100) + 'vh)';
+    setTimeout(() => { isAnimating = false; }, ANIM_DURATION);
+
+    updateProgress();
+    updateScrollIndicator();
+    revealSection(currentSection);
+  }
+
+  window.addEventListener('touchend', finishTouch, { passive: true });
+  window.addEventListener('touchcancel', finishTouch, { passive: true });
+
+  // Mouse wheel handling
+  let wheelTimeout = null;
+  window.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    if (isAnimating) return;
+    clearTimeout(wheelTimeout);
+    wheelTimeout = setTimeout(() => {
+      const direction = e.deltaY > 0 ? 1 : -1;
+      goToSection(currentSection + direction);
+    }, 50);
+  }, { passive: false });
+
+  // Keyboard navigation
+  window.addEventListener('keydown', (e) => {
+    if (isAnimating) return;
+    if (e.key === 'ArrowDown' || e.key === 'PageDown') {
+      e.preventDefault();
+      goToSection(currentSection + 1);
+    } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+      e.preventDefault();
+      goToSection(currentSection - 1);
+    }
+  });
+
+  // Initialize: reveal the cover section
+  revealSection(0);
+  sections[0]?.classList.add('in-view');
 
   /* ==========================================
      Ripple Effect
