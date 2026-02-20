@@ -469,25 +469,43 @@
     }
   }
 
+  function sectionOffset(index) {
+    return -index * window.innerHeight;
+  }
+
+  function applyTransform(px) {
+    mainEl.style.transform = 'translateY(' + px + 'px)';
+  }
+
   function goToSection(index, instant) {
     if (index < 0 || index >= totalSections) return;
     if (index === currentSection && !instant) return;
     currentSection = index;
-    const offset = -index * 100;
     if (instant) {
       mainEl.style.transition = 'none';
-      mainEl.style.transform = 'translateY(' + offset + 'vh)';
-      mainEl.offsetHeight; // force reflow
+      applyTransform(sectionOffset(index));
+      mainEl.offsetHeight;
       mainEl.style.transition = SNAP_TRANSITION;
     } else {
       isAnimating = true;
-      mainEl.style.transform = 'translateY(' + offset + 'vh)';
+      mainEl.style.transition = SNAP_TRANSITION;
+      applyTransform(sectionOffset(index));
       setTimeout(() => { isAnimating = false; }, ANIM_DURATION);
     }
     updateProgress();
     updateScrollIndicator();
     revealSection(currentSection);
   }
+
+  // Recalculate position on resize (address bar show/hide, orientation change)
+  window.addEventListener('resize', () => {
+    if (!isTouching) {
+      mainEl.style.transition = 'none';
+      applyTransform(sectionOffset(currentSection));
+      mainEl.offsetHeight;
+      mainEl.style.transition = SNAP_TRANSITION;
+    }
+  });
 
   // Touch handling — real-time drag with snap
   window.addEventListener('touchstart', (e) => {
@@ -508,20 +526,18 @@
     const vp = window.innerHeight;
     const baseOffset = -currentSection * vp;
 
-    // Clamp drag to ±1 section
     const clamped = Math.max(-vp, Math.min(vp, dragDelta));
     let offset = baseOffset + clamped;
 
     // Rubber-band at boundaries
-    const maxOff = 0;
     const minOff = -(totalSections - 1) * vp;
-    if (offset > maxOff) {
-      offset = maxOff + (offset - maxOff) * 0.2;
+    if (offset > 0) {
+      offset = offset * 0.2;
     } else if (offset < minOff) {
       offset = minOff + (offset - minOff) * 0.2;
     }
 
-    mainEl.style.transform = 'translateY(' + offset + 'px)';
+    applyTransform(offset);
   }, { passive: false });
 
   function finishTouch() {
@@ -532,8 +548,6 @@
     const dt = Date.now() - touchStartTime;
     const velocity = Math.abs(dy) / Math.max(dt, 1);
 
-    mainEl.style.transition = SNAP_TRANSITION;
-
     let target = currentSection;
     if (Math.abs(dy) > SWIPE_THRESHOLD || velocity > 0.3) {
       target += dy > 0 ? 1 : -1;
@@ -542,7 +556,8 @@
 
     isAnimating = true;
     currentSection = target;
-    mainEl.style.transform = 'translateY(' + (-target * 100) + 'vh)';
+    mainEl.style.transition = SNAP_TRANSITION;
+    applyTransform(sectionOffset(target));
     setTimeout(() => { isAnimating = false; }, ANIM_DURATION);
 
     updateProgress();
@@ -577,7 +592,9 @@
     }
   });
 
-  // Initialize: reveal the cover section
+  // Initialize
+  applyTransform(0);
+  mainEl.style.transition = SNAP_TRANSITION;
   revealSection(0);
   sections[0]?.classList.add('in-view');
 
