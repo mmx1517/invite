@@ -4,15 +4,15 @@
   'use strict';
 
   const CFG = {
-    eventDate: new Date('2026-03-15T12:30:00+09:00'),
+    eventDate: new Date('2026-03-14T12:30:00+09:00'),
     eventYear: 2026,
     eventMonth: 3,
-    eventDay: 15,
+    eventDay: 14,
     address: '서울 종로구 종로5길 7 타워8빌딩 지하 2층',
     venueName: '진진수라 광화문점',
     loaderDuration: 2000,
     dustCount: 50,
-    petalCount: 12,
+    petalCount: 25,
     prefersReducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches
   };
 
